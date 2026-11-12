@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Repositório Científico de Zitundo</title>
+<meta name="description" content="Plataforma de organização, preservação e partilha de materiais científicos sobre Zitundo.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#172b25;--muted:#64756e;--green:#176b4b;--pale:#eef5f0;--line:#dce6df;--paper:#fff;--bg:#f5f8f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#123d2d;color:white;padding:24px max(22px,calc((100% - 1120px)/2));}
+.brand{display:flex;gap:14px;align-items:center}.mark{width:46px;height:46px;border-radius:13px;background:#d6eadc;color:#123d2d;display:grid;place-items:center;font-size:24px;font-weight:800}
+h1{font-size:clamp(21px,3vw,30px);margin:0}header p{margin:5px 0 0;color:#d5e6dc}
+main{max-width:1120px;margin:28px auto;padding:0 20px}.notice{background:#fff7df;border:1px solid #f0dfaa;padding:12px 15px;border-radius:10px;margin-bottom:18px;color:#594715}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 3px 12px #173b2910}
+h2{font-size:19px;margin:0 0 14px}.muted{color:var(--muted)}label{display:block;font-weight:650;margin:12px 0 5px}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd8cf;border-radius:9px;font:inherit;background:white;color:var(--ink)}textarea{min-height:80px;resize:vertical}
+button{border:0;border-radius:9px;background:var(--green);color:white;padding:10px 15px;font:600 14px inherit;cursor:pointer}button.secondary{background:#e8f0ea;color:#1c503a}button.danger{background:#a53b32}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.authrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.toolbar input{flex:1;min-width:220px}.toolbar select{width:auto;min-width:155px}
+.doc{border:1px solid var(--line);border-radius:11px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;gap:16px}.doc h3{font-size:16px;margin:0 0 4px}.doc p{margin:4px 0;color:var(--muted);font-size:13px}.tag{display:inline-block;padding:3px 8px;border-radius:30px;background:var(--pale);color:#20573e;font-size:12px;font-weight:700}.tag.private{background:#fff0e8;color:#8b4527}.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;margin-top:12px}.small{font-size:12px;color:var(--muted)}#status{margin-top:10px;font-size:13px;min-height:20px}.userbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:30px 15px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.doc{display:block}.doc .actions{margin-top:10px}.authrow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="mark">Z</div><div><h1>Repositório Científico de Zitundo</h1><p>Conhecimento, documentação e investigação de campo</p></div></div></header>
+<main>
+<div class="notice"><strong>Versão inicial:</strong> a plataforma está preparada para ligar ao Supabase. Para activar contas, armazenamento e partilha entre investigadores, é necessário configurar as credenciais e executar o ficheiro SQL indicado no README.</div>
+<div class="grid">
+<section class="panel">
+<h2>Biblioteca científica</h2>
+<p class="muted">Consulte materiais públicos ou entre com a sua conta para aceder aos documentos internos da equipa.</p>
+<div class="userbar"><span id="sessionLabel" class="small">A verificar sessão…</span><button id="logoutBtn" class="secondary" hidden>Sair</button></div>
+<div class="toolbar" style="margin:12px 0"><input id="search" placeholder="Pesquisar por título, descrição ou categoria"><select id="visibilityFilter"><option value="all">Todos os materiais</option><option value="public">Públicos</option><option value="restricted">Restritos</option></select></div>
+<div id="documents"><div class="empty">A carregar documentos…</div></div>
+</section>
+<section class="panel">
+<div id="authPanel">
+<h2>Acesso da equipa</h2><p class="muted">Entre com o endereço de correio electrónico autorizado pela equipa.</p>
+<label for="email">Correio electrónico</label><input id="email" type="email" autocomplete="email" placeholder="nome@exemplo.com">
+<label for="password">Palavra-passe</label><input id="password" type="password" autocomplete="current-password" placeholder="A sua palavra-passe">
+<div class="actions"><button id="loginBtn">Entrar</button><button id="signupBtn" class="secondary">Criar conta</button></div>
+<p class="small">A criação de conta não concede acesso automaticamente aos documentos restritos. Um administrador deve autorizar o membro no Supabase.</p>
+</div>
+<div id="uploadPanel" hidden>
+<h2>Adicionar material</h2><p class="muted">Disponível apenas para membros autorizados da equipa.</p>
+<label for="title">Título do documento *</label><input id="title" placeholder="Ex.: Relatório de levantamento de campo">
+<label for="category">Categoria</label><select id="category"><option>Relatórios</option><option>Dados de campo</option><option>Cartografia e mapas</option><option>Entrevistas</option><option>Fotografias</option><option>Artigos científicos</option><option>Instrumentos de recolha</option><option>Outros</option></select>
+<label for="description">Descrição</label><textarea id="description" placeholder="Breve descrição do conteúdo…"></textarea>
+<label for="visibility">Visibilidade</label><select id="visibility"><option value="restricted">Restrito à equipa</option><option value="public">Público</option></select>
+<label for="file">Ficheiro *</label><input id="file" type="file">
+<div class="actions"><button id="uploadBtn">Enviar documento</button></div>
+</div>
+<div id="status" role="status" aria-live="polite"></div>
+</section></div>
+</main>
+<footer>Repositório Científico de Zitundo · Plataforma de apoio à investigação</footer>
+<script>
+const SUPABASE_URL = "COLOCAR_URL_DO_SUPABASE";
+const SUPABASE_ANON_KEY = "COLOCAR_CHAVE_PUBLICA_ANON";
+let db = null, currentUser = null, docs = [];
+const $ = id => document.getElementById(id);
+const status = msg => $("status").textContent = msg;
+const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLOCAR_") && !SUPABASE_ANON_KEY.includes("COLOCAR_");
+if (configured && window.supabase) db = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+function setSession(user){currentUser=user;$("sessionLabel").textContent=user?"Sessão: "+user.email:"Sessão não iniciada";$("logoutBtn").hidden=!user;$("authPanel").hidden=!!user;$("uploadPanel").hidden=!user;}
+function escapeHtml(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function loadDocs(){
+ if(!db){$("documents").innerHTML='<div class="empty">A ligação ao serviço ainda não foi configurada. Consulte o README no GitHub para concluir a instalação.</div>';return;}
+ const {data,error}=await db.from("documents").select("*").order("created_at",{ascending:false});
+ if(error){$("documents").innerHTML='<div class="empty">Não foi possível carregar os documentos. '+escapeHtml(error.message)+'</div>';return;}
+ docs=data||[];renderDocs();
+}
+function renderDocs(){
+ const q=$("search").value.toLowerCase(), f=$("visibilityFilter").value;
+ const shown=docs.filter(d=>(f==="all"||d.visibility===f)&&[d.title,d.description,d.category].join(" ").toLowerCase().includes(q));
+ if(!shown.length){$("documents").innerHTML='<div class="empty">Ainda não existem materiais para apresentar.</div>';return;}
+ $("documents").innerHTML=shown.map(d=>'<article class="doc"><div><h3>'+escapeHtml(d.title)+'</h3><p>'+escapeHtml(d.category||"Outros")+' · '+new Date(d.created_at).toLocaleDateString("pt-PT")+'</p><p>'+escapeHtml(d.description||"Sem descrição")+'</p><span class="tag '+(d.visibility==="restricted"?"private":"")+'">'+(d.visibility==="public"?"Público":"Restrito")+'</span></div><div class="actions"><button class="secondary" data-download="'+d.id+'">Abrir / descarregar</button>'+(currentUser?'<button class="danger" data-delete="'+d.id+'">Eliminar</button>':"")+'</div></article>').join("");
+ document.querySelectorAll("[data-download]").forEach(b=>b.addEventListener("click",()=>downloadDoc(b.dataset.download)));
+ document.querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteDoc(b.dataset.delete)));
+}
+async function downloadDoc(id){
+ const d=docs.find(x=>x.id===id);if(!d)return;
+ const bucket=d.visibility==="public"?"public-documents":"restricted-documents";
+ let url;
+ if(d.visibility==="public"){const r=db.storage.from(bucket).getPublicUrl(d.storage_path);url=r.data.publicUrl;}
+ else {const r=await db.storage.from(bucket).createSignedUrl(d.storage_path,120);if(r.error){status(r.error.message);return;}url=r.data.signedUrl;}
+ window.open(url,"_blank","noopener");}
+async function deleteDoc(id){if(!confirm("Tem a certeza de que pretende eliminar este registo e o respectivo ficheiro?"))return;const d=docs.find(x=>x.id===id);const bucket=d.visibility==="public"?"public-documents":"restricted-documents";const rm=await db.storage.from(bucket).remove([d.storage_path]);if(rm.error){status(rm.error.message);return;}const del=await db.from("documents").delete().eq("id",id);status(del.error?del.error.message:"Documento eliminado.");await loadDocs();}
+async function signIn(){if(!db){status("Configure primeiro o Supabase, seguindo o README.");return;}const {data,error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){status(error.message);return;}setSession(data.user);status("Sessão iniciada.");await loadDocs();}
+$("loginBtn").onclick=signIn;
+$("signupBtn").onclick=async()=>{if(!db){status("Configure primeiro o Supabase, seguindo o README.");return;}const {error}=await db.auth.signUp({email:$("email").value,password:$("password").value});status(error?error.message:"Conta criada. Confirme o endereço de correio electrónico, se solicitado. Depois, o administrador deverá autorizar o acesso à equipa.");};
+$("logoutBtn").onclick=async()=>{await db.auth.signOut();setSession(null);await loadDocs();};
+$("uploadBtn").onclick=async()=>{
+ if(!db||!currentUser){status("É necessário iniciar sessão.");return;}
+ const file=$("file").files[0], title=$("title").value.trim();if(!file||!title){status("Indique o título e seleccione um ficheiro.");return;}
+ if(file.size>25*1024*1024){status("O ficheiro excede o limite recomendado de 25 MB.");return;}
+ const visibility=$("visibility").value,bucket=visibility==="public"?"public-documents":"restricted-documents";
+ const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_"),path=currentUser.id+"/"+crypto.randomUUID()+"-"+safeName;
+ status("A enviar ficheiro…");const up=await db.storage.from(bucket).upload(path,file,{upsert:false});
+ if(up.error){status(up.error.message);return;}
+ const ins=await db.from("documents").insert({title,category:$("category").value,description:$("description").value,visibility,storage_path:path,original_filename:file.name,uploaded_by:currentUser.id});
+ if(ins.error){await db.storage.from(bucket).remove([path]);status(ins.error.message);return;}
+ $("title").value="";$("description").value="";$("file").value="";status("Documento adicionado com sucesso.");await loadDocs();
+};
+$("search").addEventListener("input",renderDocs);$("visibilityFilter").addEventListener("change",renderDocs);
+if(db){db.auth.getSession().then(({data})=>{setSession(data.session?.user||null);loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);loadDocs();});}
+else{setSession(null);loadDocs();}
+</script>
+</body></html>
