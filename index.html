@@ -57,12 +57,12 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:30px 15px}
 <script>
 const SUPABASE_URL = "COLOCAR_URL_DO_SUPABASE";
 const SUPABASE_ANON_KEY = "COLOCAR_CHAVE_PUBLICA_ANON";
-let db = null, currentUser = null, docs = [];
+let db = null, currentUser = null, isTeamMember = false, docs = [];
 const $ = id => document.getElementById(id);
 const status = msg => $("status").textContent = msg;
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLOCAR_") && !SUPABASE_ANON_KEY.includes("COLOCAR_");
 if (configured && window.supabase) db = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-function setSession(user){currentUser=user;$("sessionLabel").textContent=user?"Sessão: "+user.email:"Sessão não iniciada";$("logoutBtn").hidden=!user;$("authPanel").hidden=!!user;$("uploadPanel").hidden=!user;}
+function setSession(user){currentUser=user;isTeamMember=false;$("sessionLabel").textContent=user?"Sessão: "+user.email:"Sessão não iniciada";$("logoutBtn").hidden=!user;$("authPanel").hidden=!!user;$("uploadPanel").hidden=true;} async function checkMembership(){if(!db||!currentUser)return;const r=await db.from("team_members").select("user_id").eq("user_id",currentUser.id).maybeSingle();isTeamMember=!!r.data&&!r.error;$("uploadPanel").hidden=!isTeamMember;$("sessionLabel").textContent=currentUser.email+(isTeamMember?" · membro da equipa":" · conta ainda não autorizada");}
 function escapeHtml(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function loadDocs(){
  if(!db){$("documents").innerHTML='<div class="empty">A ligação ao serviço ainda não foi configurada. Consulte o README no GitHub para concluir a instalação.</div>';return;}
@@ -86,7 +86,7 @@ async function downloadDoc(id){
  else {const r=await db.storage.from(bucket).createSignedUrl(d.storage_path,120);if(r.error){status(r.error.message);return;}url=r.data.signedUrl;}
  window.open(url,"_blank","noopener");}
 async function deleteDoc(id){if(!confirm("Tem a certeza de que pretende eliminar este registo e o respectivo ficheiro?"))return;const d=docs.find(x=>x.id===id);const bucket=d.visibility==="public"?"public-documents":"restricted-documents";const rm=await db.storage.from(bucket).remove([d.storage_path]);if(rm.error){status(rm.error.message);return;}const del=await db.from("documents").delete().eq("id",id);status(del.error?del.error.message:"Documento eliminado.");await loadDocs();}
-async function signIn(){if(!db){status("Configure primeiro o Supabase, seguindo o README.");return;}const {data,error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){status(error.message);return;}setSession(data.user);status("Sessão iniciada.");await loadDocs();}
+async function signIn(){if(!db){status("Configure primeiro o Supabase, seguindo o README.");return;}const {data,error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){status(error.message);return;}setSession(data.user);await checkMembership();status(isTeamMember?"Sessão iniciada.":"Conta autenticada, mas ainda sem autorização da equipa.");await loadDocs();}
 $("loginBtn").onclick=signIn;
 $("signupBtn").onclick=async()=>{if(!db){status("Configure primeiro o Supabase, seguindo o README.");return;}const {error}=await db.auth.signUp({email:$("email").value,password:$("password").value});status(error?error.message:"Conta criada. Confirme o endereço de correio electrónico, se solicitado. Depois, o administrador deverá autorizar o acesso à equipa.");};
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();setSession(null);await loadDocs();};
@@ -103,7 +103,7 @@ $("uploadBtn").onclick=async()=>{
  $("title").value="";$("description").value="";$("file").value="";status("Documento adicionado com sucesso.");await loadDocs();
 };
 $("search").addEventListener("input",renderDocs);$("visibilityFilter").addEventListener("change",renderDocs);
-if(db){db.auth.getSession().then(({data})=>{setSession(data.session?.user||null);loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);loadDocs();});}
+if(db){db.auth.getSession().then(({data})=>{setSession(data.session?.user||null);await checkMembership();loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);loadDocs();});}
 else{setSession(null);loadDocs();}
 </script>
 </body></html>
