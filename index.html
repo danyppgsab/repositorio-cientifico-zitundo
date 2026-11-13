@@ -40,5 +40,33 @@ $("signupBtn").onclick=async()=>{if(!db){status("Configure primeiro o Supabase, 
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();setSession(null);await loadDocs();};
 $("uploadBtn").onclick=async()=>{if(!db||!currentUser){status("É necessário iniciar sessão.");return;}const files=Array.from($("file").files||[]),baseTitle=$("title").value.trim();if(!files.length){status("Seleccione pelo menos um ficheiro.");return;}if(files.length===1&&!baseTitle){status("Indique o título do ficheiro.");return;}const tooLarge=files.find(file=>file.size>50*1024*1024);if(tooLarge){status('O ficheiro "'+tooLarge.name+'" excede o limite máximo de 50 MB.');return;}const visibility=$("visibility").value,bucket=visibility==="public"?"public-documents":"restricted-documents",category=$("category").value,description=$("description").value,btn=$("uploadBtn");btn.disabled=true;let completed=0;const failures=[];try{for(let i=0;i<files.length;i++){const file=files[i],safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_"),path=currentUser.id+"/"+crypto.randomUUID()+"-"+safeName,title=files.length===1?baseTitle:file.name.replace(/\\.[^.]+$/,"");status("A carregar ficheiro "+(i+1)+" de "+files.length+": "+file.name);const up=await db.storage.from(bucket).upload(path,file,{upsert:false,contentType:file.type||"application/octet-stream"});if(up.error){failures.push(file.name+": "+up.error.message);continue;}const ins=await db.from("documents").insert({title,category,description,visibility,storage_path:path,original_filename:file.name,uploaded_by:currentUser.id});if(ins.error){await db.storage.from(bucket).remove([path]);failures.push(file.name+": "+ins.error.message);continue;}completed++;}if(completed){$("title").value="";$("description").value="";} $("file").value="";activeFolder="root";activeSubfolder=null;status(completed+" de "+files.length+" ficheiro(s) carregado(s) com sucesso."+(failures.length?" Falhas: "+failures.join(" | "):""));await loadDocs();}finally{btn.disabled=false;}};
 $("search").addEventListener("input",()=>{activeFolder="root";activeSubfolder=null;renderDocs();});$("visibilityFilter").addEventListener("change",()=>{activeFolder="root";activeSubfolder=null;renderDocs();});$("refreshDocsBtn").addEventListener("click",loadDocs);$("showDocsBtn").addEventListener("click",async()=>{await loadDocs();activeFolder="root";activeSubfolder=null;renderDocs();$("documents").scrollIntoView({behavior:"smooth",block:"start"});});
-if(db){db.auth.getSession().then(async({data})=>{setSession(data.session?.user||null);await checkMembership();loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);setTimeout(async()=>{await checkMembership();await loadDocs();},0);});}else{setSession(null);loadDocs();}
+if(db){
+  let authQueue=Promise.resolve();
+  const syncAuth=(user)=>{
+    authQueue=authQueue.then(async()=>{
+      setSession(user||null);
+      await checkMembership();
+      await loadDocs();
+    }).catch(error=>{
+      console.error("Falha ao actualizar sessão e biblioteca:",error);
+      $("docCount").textContent="Erro";
+      $("documents").textContent="Não foi possível actualizar a sessão e carregar os documentos. Actualize a página e tente novamente.";
+    });
+    return authQueue;
+  };
+  db.auth.onAuthStateChange((event,session)=>{
+    if(event!=="INITIAL_SESSION") syncAuth(session?.user||null);
+  });
+  db.auth.getSession().then(({data,error})=>{
+    if(error) throw error;
+    return syncAuth(data.session?.user||null);
+  }).catch(error=>{
+    console.error("Falha ao recuperar sessão:",error);
+    $("sessionLabel").textContent="Não foi possível verificar a sessão";
+    loadDocs();
+  });
+}else{
+  setSession(null);
+  loadDocs();
+}
 </script></body></html>
