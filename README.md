@@ -17,7 +17,7 @@ A interface está em `index.html`. A autenticação, a base de dados e os fichei
 ## Configurar o Supabase
 
 1. Crie um projecto gratuito em [supabase.com](https://supabase.com/).
-2. No painel do projecto, abra **SQL Editor** e execute todo o conteúdo de `supabase/schema.sql`.
+2. O esquema inicial já foi aplicado automaticamente no projecto criado. O ficheiro `supabase/schema.sql` fica guardado no GitHub para referência e futuras instalações.
 3. Em **Project Settings → API** (ou **Data API**), copie o Project URL e a chave pública **anon/publishable**.
 4. No ficheiro `index.html`, substitua:
    - `COLOCAR_URL_DO_SUPABASE` pelo Project URL;
