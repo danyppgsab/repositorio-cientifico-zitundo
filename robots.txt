@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://danyppgsab.github.io/repositorio-cientifico-zitundo/sitemap.xml
