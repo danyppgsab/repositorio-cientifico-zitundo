@@ -55,8 +55,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:30px 15px}
 </main>
 <footer>Repositório Científico de Zitundo · Plataforma de apoio à investigação</footer>
 <script>
-const SUPABASE_URL = "COLOCAR_URL_DO_SUPABASE";
-const SUPABASE_ANON_KEY = "COLOCAR_CHAVE_PUBLICA_ANON";
+const SUPABASE_URL = "https://cvrjvnvtmsxljrgtaozm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_GB_oed6KXw4-Z0ZYh-H6fg_cBAJ4MCU";
 let db = null, currentUser = null, isTeamMember = false, docs = [];
 const $ = id => document.getElementById(id);
 const status = msg => $("status").textContent = msg;
@@ -74,7 +74,7 @@ function renderDocs(){
  const q=$("search").value.toLowerCase(), f=$("visibilityFilter").value;
  const shown=docs.filter(d=>(f==="all"||d.visibility===f)&&[d.title,d.description,d.category].join(" ").toLowerCase().includes(q));
  if(!shown.length){$("documents").innerHTML='<div class="empty">Ainda não existem materiais para apresentar.</div>';return;}
- $("documents").innerHTML=shown.map(d=>'<article class="doc"><div><h3>'+escapeHtml(d.title)+'</h3><p>'+escapeHtml(d.category||"Outros")+' · '+new Date(d.created_at).toLocaleDateString("pt-PT")+'</p><p>'+escapeHtml(d.description||"Sem descrição")+'</p><span class="tag '+(d.visibility==="restricted"?"private":"")+'">'+(d.visibility==="public"?"Público":"Restrito")+'</span></div><div class="actions"><button class="secondary" data-download="'+d.id+'">Abrir / descarregar</button>'+(currentUser?'<button class="danger" data-delete="'+d.id+'">Eliminar</button>':"")+'</div></article>').join("");
+ $("documents").innerHTML=shown.map(d=>'<article class="doc"><div><h3>'+escapeHtml(d.title)+'</h3><p>'+escapeHtml(d.category||"Outros")+' · '+new Date(d.created_at).toLocaleDateString("pt-PT")+'</p><p>'+escapeHtml(d.description||"Sem descrição")+'</p><span class="tag '+(d.visibility==="restricted"?"private":"")+'">'+(d.visibility==="public"?"Público":"Restrito")+'</span></div><div class="actions"><button class="secondary" data-download="'+d.id+'">Abrir / descarregar</button>'+(isTeamMember?'<button class="danger" data-delete="'+d.id+'">Eliminar</button>':"")+'</div></article>').join("");
  document.querySelectorAll("[data-download]").forEach(b=>b.addEventListener("click",()=>downloadDoc(b.dataset.download)));
  document.querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteDoc(b.dataset.delete)));
 }
@@ -103,7 +103,7 @@ $("uploadBtn").onclick=async()=>{
  $("title").value="";$("description").value="";$("file").value="";status("Documento adicionado com sucesso.");await loadDocs();
 };
 $("search").addEventListener("input",renderDocs);$("visibilityFilter").addEventListener("change",renderDocs);
-if(db){db.auth.getSession().then(({data})=>{setSession(data.session?.user||null);await checkMembership();loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);loadDocs();});}
+if(db){db.auth.getSession().then(async({data})=>{setSession(data.session?.user||null);await checkMembership();loadDocs();});db.auth.onAuthStateChange((_e,session)=>{setSession(session?.user||null);setTimeout(async()=>{await checkMembership();await loadDocs();},0);});}
 else{setSession(null);loadDocs();}
 </script>
 </body></html>
