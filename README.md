@@ -62,3 +62,7 @@ Apenas os utilizadores registados em `team_members` podem consultar ficheiros re
 
 - `index.html` — aplicação web.
 - `supabase/schema.sql` — tabelas, buckets e políticas de segurança.
+
+## Vídeos por ligação externa
+
+Na área **Adicionar material**, pode carregar um ficheiro de vídeo ou registar um URL. São suportados links de incorporação do YouTube e Vimeo e ligações directas para ficheiros de vídeo (por exemplo MP4, WebM e MOV). YouTube e Vimeo são reproduzidos nos leitores oficiais incorporados; a possibilidade de alterar a velocidade depende dos controlos disponibilizados por cada plataforma. O download de vídeos externos depende das permissões e das regras do alojamento. Ficheiros carregados no próprio repositório usam o leitor integrado, com velocidade ajustável e opção de descarregar.
