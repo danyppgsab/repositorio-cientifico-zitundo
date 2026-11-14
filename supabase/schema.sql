@@ -19,6 +19,7 @@ create table if not exists public.documents (
   description text,
   visibility text not null check (visibility in ('public','restricted')),
   storage_path text not null,
+  source_url text,
   original_filename text not null,
   uploaded_by uuid not null references auth.users(id),
   created_at timestamptz not null default now()
